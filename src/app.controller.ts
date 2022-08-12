@@ -11,8 +11,9 @@ export class AppController {
 
 
   @Post('/webhook')
-  webhook(@Body() data, @Headers() headers) {
+  createOrder(@Body() data, @Headers() headers) {
     console.log("headers : ", headers['x-gitlab-token']);
+    // const createdOrder = this.appService.createOrder(data); 
     const gitlabkey = headers['x-gitlab-token'];
 
     console.log("gitlab from object : ", JSON.stringify(data));
@@ -28,6 +29,7 @@ export class AppController {
     } else {
 
     }
+
 
   }
 
@@ -56,18 +58,26 @@ export class AppController {
 
         data.builds.forEach((element, i) => {
           message += `----------------\n`;
-          message += `[${i + 1}]打包階段:\n ${element.stage}  \n\n打包結果:\n  ${element.status}  \n\n耗時:\n  ${element.duration}  \n\n`
+          message += `[${i + 1}]打包階段:\n ${element.stage}  \n\n打包結果:\n  ${element.status}  \n\n耗時:\n  ${element.duration}`
           element.stage = element.status = element.duration
 
         });
+        // "status":"failed",  "stage":"build-frontend",    "duration":233.303372,
         message += `----------------\n`;
 
         break;
       case 'push':
         commitMessage = data.commits[0].message
         commiTitle = data.commits[0].title
-        message = `\n行為: 推送  \n\n註解抬頭 :\n ${commiTitle} \n\n註解內容 :\n ${commitMessage} \n\n`
+        message = `\n行為: 推送  \n\n註解抬頭 :\n ${commiTitle} \n\n註解內容 :\n ${commitMessage}`
         break;
+      case 'merge_request':
+
+        commitMessage = data.object_attributes.last_commit.message
+        commiTitle = data.object_attributes.last_commit.title
+        message = `\n行為: 合併請求  \n\n註解抬頭 :\n ${commiTitle} \n\n註解內容 :\n ${commitMessage} \n發起請求者 : \n  ${data.object_attributes.last_commit.author.name}`
+        break;
+
     }
 
     return message;
